@@ -1,6 +1,8 @@
-// API service layer — all calls go to the backend (proxied in dev)
+// API service layer — targets backend on :8000 during dev, or relative in prod
+const BASE = typeof window !== 'undefined' && (window.location.port === '5173' || window.location.hostname === 'localhost')
+  ? 'http://localhost:8000'
+  : ''
 
-const BASE = ''
 
 export interface Stats {
   sent: number
