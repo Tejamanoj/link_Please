@@ -1,7 +1,8 @@
-// API service layer — targets backend on :8000 during dev, or relative in prod
-const BASE = typeof window !== 'undefined' && (window.location.port === '5173' || window.location.hostname === 'localhost')
-  ? 'http://localhost:8000'
-  : ''
+// API service layer — uses VITE_API_URL in production (Vercel), falls back to :8000 for local dev
+const BASE = import.meta.env.VITE_API_URL
+  || (typeof window !== 'undefined' && (window.location.port === '5173' || window.location.hostname === 'localhost')
+    ? 'http://localhost:8000'
+    : '')
 
 
 export interface Stats {
