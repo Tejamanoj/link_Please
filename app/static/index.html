@@ -1,0 +1,610 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LinkPlease — Instagram Automation Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0b0f19;
+      --bg-card: rgba(22, 27, 46, 0.7);
+      --bg-card-hover: rgba(30, 37, 62, 0.8);
+      --border: rgba(255, 255, 255, 0.08);
+      --border-accent: rgba(99, 102, 241, 0.3);
+      --primary: #6366f1;
+      --primary-gradient: linear-gradient(135deg, #6366f1 0%, #a855f7 50%, #ec4899 100%);
+      --text: #f3f4f6;
+      --text-muted: #9ca3af;
+      --success: #10b981;
+      --warning: #f59e0b;
+      --danger: #ef4444;
+      --info: #3b82f6;
+      --shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
+      --radius: 16px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
+
+    body {
+      background-color: var(--bg);
+      background-image: 
+        radial-gradient(circle at 15% 15%, rgba(99, 102, 241, 0.15) 0%, transparent 40%),
+        radial-gradient(circle at 85% 85%, rgba(168, 85, 247, 0.12) 0%, transparent 40%);
+      color: var(--text);
+      min-height: 100vh;
+      padding: 24px;
+    }
+
+    .container {
+      max-width: 1280px;
+      margin: 0 auto;
+    }
+
+    /* Header */
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 32px;
+      padding-bottom: 20px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .logo-container {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .logo-icon {
+      width: 44px;
+      height: 44px;
+      background: var(--primary-gradient);
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      box-shadow: 0 4px 20px rgba(99, 102, 241, 0.4);
+    }
+
+    h1 {
+      font-family: 'Outfit', sans-serif;
+      font-size: 26px;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+      background: linear-gradient(135deg, #ffffff 0%, #d1d5db 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .status-badge {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(16, 185, 129, 0.1);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      color: #34d399;
+      padding: 6px 14px;
+      border-radius: 30px;
+      font-size: 13px;
+      font-weight: 500;
+    }
+
+    .pulse {
+      width: 8px;
+      height: 8px;
+      background-color: var(--success);
+      border-radius: 50%;
+      box-shadow: 0 0 10px var(--success);
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.4; transform: scale(1.2); }
+      100% { opacity: 1; transform: scale(1); }
+    }
+
+    /* Stats Grid */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 20px;
+      margin-bottom: 32px;
+    }
+
+    .stat-card {
+      background: var(--bg-card);
+      backdrop-filter: blur(12px);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 24px;
+      transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .stat-card:hover {
+      transform: translateY(-4px);
+      border-color: var(--border-accent);
+      box-shadow: var(--shadow);
+    }
+
+    .stat-label {
+      font-size: 13px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 12px;
+      font-weight: 600;
+    }
+
+    .stat-value {
+      font-family: 'Outfit', sans-serif;
+      font-size: 38px;
+      font-weight: 700;
+      color: #ffffff;
+    }
+
+    .stat-indicator {
+      position: absolute;
+      top: 0;
+      right: 0;
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      filter: blur(40px);
+      opacity: 0.15;
+    }
+
+    .stat-sent .stat-indicator { background: var(--success); }
+    .stat-failed .stat-indicator { background: var(--danger); }
+    .stat-queued .stat-indicator { background: var(--info); }
+    .stat-blocked .stat-indicator { background: var(--primary); }
+
+    /* Main Grid */
+    .main-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 28px;
+    }
+
+    @media (max-width: 1024px) {
+      .main-grid { grid-template-columns: 1fr; }
+    }
+
+    .card {
+      background: var(--bg-card);
+      backdrop-filter: blur(12px);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 28px;
+      margin-bottom: 28px;
+    }
+
+    .card-title {
+      font-family: 'Outfit', sans-serif;
+      font-size: 18px;
+      font-weight: 600;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    label {
+      display: block;
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-bottom: 8px;
+      font-weight: 500;
+    }
+
+    input, select, textarea {
+      width: 100%;
+      background: rgba(11, 15, 25, 0.6);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px 16px;
+      color: var(--text);
+      font-size: 14px;
+      outline: none;
+      transition: all 0.2s;
+    }
+
+    input:focus, textarea:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+    }
+
+    .btn {
+      width: 100%;
+      background: var(--primary-gradient);
+      border: none;
+      color: white;
+      padding: 14px;
+      border-radius: 10px;
+      font-weight: 600;
+      font-size: 14px;
+      cursor: pointer;
+      transition: all 0.2s;
+      box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);
+    }
+
+    .btn:hover {
+      opacity: 0.95;
+      transform: translateY(-1px);
+      box-shadow: 0 6px 20px rgba(99, 102, 241, 0.4);
+    }
+
+    .btn-secondary {
+      background: rgba(255, 255, 255, 0.08);
+      color: var(--text);
+      box-shadow: none;
+      border: 1px solid var(--border);
+    }
+
+    .btn-secondary:hover {
+      background: rgba(255, 255, 255, 0.14);
+    }
+
+    .chip-container {
+      display: flex;
+      gap: 8px;
+      margin-top: 8px;
+    }
+
+    .chip {
+      background: rgba(99, 102, 241, 0.1);
+      border: 1px solid rgba(99, 102, 241, 0.3);
+      color: #818cf8;
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 12px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .chip:hover {
+      background: rgba(99, 102, 241, 0.25);
+    }
+
+    /* Rules Table */
+    .rules-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .rule-item {
+      background: rgba(11, 15, 25, 0.4);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 14px 18px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .rule-keyword {
+      font-weight: 700;
+      color: #818cf8;
+      font-size: 14px;
+    }
+
+    .rule-message {
+      font-size: 13px;
+      color: var(--text-muted);
+      max-width: 260px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    /* Activity Feed */
+    .activity-feed {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      max-height: 320px;
+      overflow-y: auto;
+    }
+
+    .feed-item {
+      font-size: 13px;
+      padding: 10px 14px;
+      background: rgba(11, 15, 25, 0.5);
+      border-left: 3px solid var(--primary);
+      border-radius: 6px;
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .feed-time {
+      color: var(--text-muted);
+      font-size: 11px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="logo-container">
+        <div class="logo-icon">⚡</div>
+        <div>
+          <h1>LinkPlease Automation</h1>
+          <p style="font-size: 13px; color: var(--text-muted);">Instagram Webhook & Asynchronous DM Dispatcher</p>
+        </div>
+      </div>
+      <div class="status-badge">
+        <div class="pulse"></div>
+        Backend Active (Port 8000)
+      </div>
+    </header>
+
+    <!-- Stats Cards -->
+    <div class="stats-grid">
+      <div class="stat-card stat-sent">
+        <div class="stat-label">DMs Delivered</div>
+        <div class="stat-value" id="stat-sent">0</div>
+        <div class="stat-indicator"></div>
+      </div>
+      <div class="stat-card stat-failed">
+        <div class="stat-label">DMs Failed</div>
+        <div class="stat-value" id="stat-failed">0</div>
+        <div class="stat-indicator"></div>
+      </div>
+      <div class="stat-card stat-queued">
+        <div class="stat-label">Queued / Processing</div>
+        <div class="stat-value" id="stat-queued">0</div>
+        <div class="stat-indicator"></div>
+      </div>
+      <div class="stat-card stat-blocked">
+        <div class="stat-label">Duplicates Blocked</div>
+        <div class="stat-value" id="stat-blocked">0</div>
+        <div class="stat-indicator"></div>
+      </div>
+    </div>
+
+    <!-- Main Grid -->
+    <div class="main-grid">
+      <!-- Left Column: Interactive Forms -->
+      <div>
+        <!-- Form 1: Create Rule -->
+        <div class="card">
+          <div class="card-title">
+            <span>✨ Create Automation Rule</span>
+            <span style="font-size: 12px; color: var(--text-muted); font-weight: normal;">POST /rules</span>
+          </div>
+          <form id="rule-form">
+            <div class="form-group">
+              <label>Target Keyword</label>
+              <input type="text" id="rule-keyword" placeholder="e.g. PRICE" required />
+              <div class="chip-container">
+                <span class="chip" onclick="setKeyword('PRICE')">PRICE</span>
+                <span class="chip" onclick="setKeyword('DISCOUNT')">DISCOUNT</span>
+                <span class="chip" onclick="setKeyword('INFO')">INFO</span>
+                <span class="chip" onclick="setKeyword('LINK')">LINK</span>
+              </div>
+            </div>
+            <div class="form-group">
+              <label>Auto-DM Reply Message</label>
+              <textarea id="rule-message" rows="3" placeholder="Here is the price list: http://example.com/prices" required></textarea>
+            </div>
+            <button type="submit" class="btn">Create Rule</button>
+          </form>
+        </div>
+
+        <!-- Form 2: Test Webhook -->
+        <div class="card">
+          <div class="card-title">
+            <span>📩 Send Webhook Event</span>
+            <span style="font-size: 12px; color: var(--text-muted); font-weight: normal;">POST /webhook</span>
+          </div>
+          <form id="webhook-form">
+            <div class="form-group" style="display: flex; gap: 12px;">
+              <div style="flex: 1;">
+                <label>Event ID</label>
+                <input type="text" id="wh-event-id" required />
+              </div>
+              <div style="flex: 1;">
+                <label>Commenter User ID</label>
+                <input type="text" id="wh-user-id" value="usr_arjun" required />
+              </div>
+            </div>
+            <div class="form-group">
+              <label>Comment Text</label>
+              <input type="text" id="wh-text" value="Can you share the PRICE please?" required />
+            </div>
+            <div style="display: flex; gap: 10px; margin-bottom: 12px;">
+              <button type="button" class="btn btn-secondary" onclick="quickFill('PRICE')">Send PRICE Comment</button>
+              <button type="button" class="btn btn-secondary" onclick="quickFill('DUP')">Send Duplicate Comment</button>
+            </div>
+            <button type="submit" class="btn">Trigger Webhook Event</button>
+          </form>
+        </div>
+      </div>
+
+      <!-- Right Column: Active Rules & Activity Feed -->
+      <div>
+        <!-- Active Rules List -->
+        <div class="card">
+          <div class="card-title">
+            <span>📜 Active Keyword Rules</span>
+            <button class="btn btn-secondary" style="width: auto; padding: 6px 12px; font-size: 12px;" onclick="loadRules()">Refresh</button>
+          </div>
+          <div class="rules-list" id="rules-container">
+            <div style="color: var(--text-muted); font-size: 13px; text-align: center; padding: 20px;">No rules created yet. Use the form on the left to add one!</div>
+          </div>
+        </div>
+
+        <!-- Live Activity Log -->
+        <div class="card">
+          <div class="card-title">
+            <span>📡 Real-time Activity Feed</span>
+          </div>
+          <div class="activity-feed" id="activity-feed">
+            <div class="feed-item">
+              <span>System initialized. Listening for webhooks...</span>
+              <span class="feed-time">Just now</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Utility functions
+    function setKeyword(val) {
+      document.getElementById('rule-keyword').value = val;
+      if (!document.getElementById('rule-message').value) {
+        document.getElementById('rule-message').value = `Here are details for ${val}: http://example.com/${val.toLowerCase()}`;
+      }
+    }
+
+    function generateEventId() {
+      return 'evt_' + Math.random().toString(36).substr(2, 9);
+    }
+
+    document.getElementById('wh-event-id').value = generateEventId();
+
+    function quickFill(type) {
+      document.getElementById('wh-event-id').value = generateEventId();
+      if (type === 'PRICE') {
+        document.getElementById('wh-user-id').value = 'usr_' + Math.random().toString(36).substr(2, 5);
+        document.getElementById('wh-text').value = 'PRICE please!';
+      } else if (type === 'DUP') {
+        document.getElementById('wh-text').value = 'PRICE again!';
+      }
+    }
+
+    function addLog(msg) {
+      const feed = document.getElementById('activity-feed');
+      const item = document.createElement('div');
+      item.className = 'feed-item';
+      const timeStr = new Date().toLocaleTimeString();
+      item.innerHTML = `<span>${msg}</span><span class="feed-time">${timeStr}</span>`;
+      feed.insertBefore(item, feed.firstChild);
+    }
+
+    // API Calls
+    async function fetchStats() {
+      try {
+        const res = await fetch('/stats');
+        if (res.ok) {
+          const data = await res.json();
+          document.getElementById('stat-sent').innerText = data.sent;
+          document.getElementById('stat-failed').innerText = data.failed;
+          document.getElementById('stat-queued').innerText = data.queued;
+          document.getElementById('stat-blocked').innerText = data.duplicates_blocked;
+        }
+      } catch (err) {
+        console.error("Error fetching stats:", err);
+      }
+    }
+
+    async function loadRules() {
+      try {
+        const res = await fetch('/api/rules');
+        if (res.ok) {
+          const rules = await res.json();
+          const container = document.getElementById('rules-container');
+          if (rules.length === 0) {
+            container.innerHTML = '<div style="color: var(--text-muted); font-size: 13px; text-align: center; padding: 20px;">No rules created yet. Use the form on the left to add one!</div>';
+            return;
+          }
+          container.innerHTML = rules.map(r => `
+            <div class="rule-item">
+              <div>
+                <span class="rule-keyword">${r.keyword}</span>
+                <div class="rule-message">${r.dm_message}</div>
+              </div>
+              <span style="font-size: 11px; color: var(--text-muted); font-family: monospace;">${r.rule_id}</span>
+            </div>
+          `).join('');
+        }
+      } catch (err) {
+        console.error("Error loading rules:", err);
+      }
+    }
+
+    // Form handlers
+    document.getElementById('rule-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const keyword = document.getElementById('rule-keyword').value;
+      const dm_message = document.getElementById('rule-message').value;
+
+      try {
+        const res = await fetch('/rules', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ keyword, dm_message })
+        });
+        if (res.status === 201) {
+          const rule = await res.json();
+          addLog(`✅ Created Rule [${rule.keyword}] (ID: ${rule.rule_id})`);
+          document.getElementById('rule-keyword').value = '';
+          document.getElementById('rule-message').value = '';
+          loadRules();
+        } else {
+          const err = await res.json();
+          addLog(`❌ Error creating rule: ${JSON.stringify(err)}`);
+        }
+      } catch (err) {
+        addLog(`❌ Network error creating rule: ${err}`);
+      }
+    });
+
+    document.getElementById('webhook-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const event_id = document.getElementById('wh-event-id').value;
+      const user_id = document.getElementById('wh-user-id').value;
+      const text = document.getElementById('wh-text').value;
+
+      const payload = {
+        event_id,
+        event_type: "comment.created",
+        sent_at: new Date().toISOString(),
+        data: {
+          comment_id: "cmt_" + Math.random().toString(36).substr(2, 6),
+          text,
+          from: { user_id, username: user_id.replace('usr_', '') }
+        }
+      };
+
+      try {
+        const res = await fetch('/webhook', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        if (res.ok) {
+          const data = await res.json();
+          addLog(`📩 Ingested Webhook event [${event_id}]: "${text}"`);
+          document.getElementById('wh-event-id').value = generateEventId();
+          setTimeout(fetchStats, 500);
+        } else {
+          const err = await res.json();
+          addLog(`❌ Webhook error: ${JSON.stringify(err)}`);
+        }
+      } catch (err) {
+        addLog(`❌ Network error triggering webhook: ${err}`);
+      }
+    });
+
+    // Poll stats & rules periodically
+    loadRules();
+    fetchStats();
+    setInterval(fetchStats, 2000);
+  </script>
+</body>
+</html>
