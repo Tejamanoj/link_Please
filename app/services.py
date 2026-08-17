@@ -57,6 +57,17 @@ async def toggle_rule_active(session: AsyncSession, rule_id: str) -> Optional[Ru
     logger.info(f"Rule toggled: id={rule.id}, active={rule.active}")
     return rule
 
+async def delete_rule(session: AsyncSession, rule_id: str) -> bool:
+    """Deletes a rule by ID. Returns True if deleted, False if not found."""
+    rule = await session.get(Rule, rule_id)
+    if not rule:
+        return False
+    await session.delete(rule)
+    await session.commit()
+    logger.info(f"Rule deleted: id={rule_id}")
+    return True
+
+
 async def get_recent_jobs(session: AsyncSession, limit: int = 50) -> List[DMJob]:
     """Retrieves the most recent DM jobs for the admin dashboard, with rule eagerly loaded."""
     result = await session.execute(

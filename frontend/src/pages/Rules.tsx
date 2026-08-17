@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback, type FormEvent } from 'react'
 import StatusBadge from '../components/StatusBadge'
-import { fetchRules, createRule, toggleRule, type Rule } from '../api'
+import { fetchRules, createRule, toggleRule, deleteRule, type Rule } from '../api'
 
 export default function Rules() {
   const [rules, setRules] = useState<Rule[]>([])
@@ -11,6 +11,7 @@ export default function Rules() {
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
   const [toggling, setToggling] = useState<string | null>(null)
+  const [deleting, setDeleting] = useState<string | null>(null)
 
   const load = useCallback(async () => {
     try {
@@ -57,6 +58,19 @@ export default function Rules() {
       setToggling(null)
     }
   }
+
+  async function handleDelete(ruleId: string) {
+    setDeleting(ruleId)
+    try {
+      await deleteRule(ruleId)
+      await load()
+    } catch {
+      // silent
+    } finally {
+      setDeleting(null)
+    }
+  }
+
 
   const SUGGESTIONS = ['PRICE', 'DISCOUNT', 'INFO', 'LINK', 'DEMO', 'COLLAB', 'CATALOG']
 
@@ -243,18 +257,18 @@ export default function Rules() {
                 </div>
               </div>
 
-              <div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <button
                   onClick={() => handleToggle(rule.rule_id)}
-                  disabled={toggling === rule.rule_id}
+                  disabled={toggling === rule.rule_id || deleting === rule.rule_id}
                   style={{
-                    padding: '7px 16px',
+                    padding: '7px 14px',
                     fontSize: '12px',
                     fontWeight: 700,
                     borderRadius: '8px',
-                    border: `1px solid ${rule.active ? '#fecaca' : '#bbf7d0'}`,
-                    backgroundColor: rule.active ? '#fef2f2' : '#f0fdf4',
-                    color: rule.active ? '#b91c1c' : '#15803d',
+                    border: `1px solid ${rule.active ? '#cbd5e1' : '#bbf7d0'}`,
+                    backgroundColor: rule.active ? '#f8fafc' : '#f0fdf4',
+                    color: rule.active ? '#475569' : '#15803d',
                     cursor: 'pointer'
                   }}
                 >
@@ -262,8 +276,26 @@ export default function Rules() {
                     ? 'Updating…'
                     : rule.active ? 'Pause Rule' : 'Activate Rule'}
                 </button>
+
+                <button
+                  onClick={() => handleDelete(rule.rule_id)}
+                  disabled={deleting === rule.rule_id}
+                  style={{
+                    padding: '7px 14px',
+                    fontSize: '12px',
+                    fontWeight: 700,
+                    borderRadius: '8px',
+                    border: '1px solid #fecaca',
+                    backgroundColor: '#fef2f2',
+                    color: '#b91c1c',
+                    cursor: 'pointer'
+                  }}
+                >
+                  {deleting === rule.rule_id ? 'Deleting…' : 'Delete'}
+                </button>
               </div>
             </div>
+
           ))
         )}
       </div>

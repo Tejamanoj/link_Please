@@ -16,7 +16,7 @@ from app.schemas import (
 from app.security import verify_hmac_signature
 from app.services import (
     create_rule, ingest_webhook_payload, get_stats,
-    get_all_rules_admin, toggle_rule_active,
+    get_all_rules_admin, toggle_rule_active, delete_rule,
     get_recent_jobs, get_recent_events
 )
 from app.worker import worker
@@ -204,6 +204,17 @@ async def handle_toggle_rule(rule_id: str, db: AsyncSession = Depends(get_db)):
         active=rule.active,
         created_at=rule.created_at,
     )
+
+@app.delete("/api/rules/{rule_id}", status_code=status.HTTP_200_OK,
+            summary="Delete a rule permanently",
+            tags=["Admin API"])
+async def handle_delete_rule(rule_id: str, db: AsyncSession = Depends(get_db)):
+    """Permanently deletes a rule by ID."""
+    deleted = await delete_rule(db, rule_id)
+    if not deleted:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Rule not found")
+    return {"status": "ok", "deleted_rule_id": rule_id}
+
 
 @app.get("/api/jobs", response_model=List[DMJobResponse], status_code=status.HTTP_200_OK,
          summary="List recent DM jobs",

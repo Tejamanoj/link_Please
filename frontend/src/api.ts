@@ -78,6 +78,12 @@ export async function toggleRule(rule_id: string): Promise<Rule> {
   return r.json()
 }
 
+export async function deleteRule(rule_id: string): Promise<void> {
+  const r = await fetch(`${BASE}/api/rules/${rule_id}`, { method: 'DELETE' })
+  if (!r.ok) throw new Error('Failed to delete rule')
+}
+
+
 export async function fetchJobs(limit = 50): Promise<DMJob[]> {
   const r = await fetch(`${BASE}/api/jobs?limit=${limit}`)
   if (!r.ok) throw new Error('Failed to fetch jobs')
