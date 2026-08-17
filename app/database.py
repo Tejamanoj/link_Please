@@ -32,7 +32,9 @@ if "sqlite" in db_url:
         cursor = dbapi_connection.cursor()
         cursor.execute("PRAGMA foreign_keys=ON")
         cursor.execute("PRAGMA journal_mode=WAL")
+        cursor.execute("PRAGMA busy_timeout=10000")  # Wait up to 10s for locks instead of failing immediately
         cursor.close()
+
 
 AsyncSessionLocal = async_sessionmaker(
     bind=async_engine,
