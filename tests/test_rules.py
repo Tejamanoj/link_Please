@@ -49,3 +49,14 @@ async def test_case_insensitive_matching(db_session):
     assert rule.keyword.lower() in comment_text_2.lower()
     assert rule.keyword.lower() in comment_text_3.lower()
     assert rule.keyword.lower() not in comment_text_4.lower()
+
+@pytest.mark.asyncio
+async def test_duplicate_keyword_rejected(client: AsyncClient):
+    r1 = await client.post("/rules", json={"keyword": "DUPKEY", "dm_message": "First message"})
+    assert r1.status_code == 201
+    
+    # Trying to create another active rule with the same keyword (case-insensitive) should return 400
+    r2 = await client.post("/rules", json={"keyword": "dupkey", "dm_message": "Second message"})
+    assert r2.status_code == 400
+    assert "already exists" in r2.json()["detail"].lower()
+

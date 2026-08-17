@@ -12,11 +12,21 @@ from app.schemas import RuleCreate, StatsResponse
 logger = logging.getLogger("linkplease.services")
 
 async def create_rule(session: AsyncSession, rule_in: RuleCreate) -> Rule:
-    """Creates a new keyword rule with a unique rule_id."""
+    """Creates a new keyword rule with a unique rule_id. Rejects duplicate active keywords."""
+    kw = rule_in.keyword.strip()
+    
+    # Check if an active rule for this keyword already exists (case-insensitive)
+    existing_result = await session.execute(
+        select(Rule).where(func.lower(Rule.keyword) == kw.lower(), Rule.active == True)
+    )
+    existing = existing_result.scalars().first()
+    if existing:
+        raise ValueError(f"Rule for keyword '{kw}' already exists (ID: {existing.id})")
+
     rule_id = f"rule_{uuid.uuid4().hex[:12]}"
     rule = Rule(
         id=rule_id,
-        keyword=rule_in.keyword.strip(),
+        keyword=kw,
         dm_message=rule_in.dm_message.strip()
     )
     session.add(rule)
@@ -24,6 +34,7 @@ async def create_rule(session: AsyncSession, rule_in: RuleCreate) -> Rule:
     await session.refresh(rule)
     logger.info(f"Rule created: id={rule.id}, keyword='{rule.keyword}'")
     return rule
+
 
 async def get_all_rules(session: AsyncSession) -> List[Rule]:
     """Retrieves only ACTIVE rules (used for keyword matching)."""
